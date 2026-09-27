@@ -105,7 +105,8 @@
             }
         }
 
-        .search-container.rainbow-ring::before {
+        .search-container.rainbow-ring::before,
+        .settings-btn.rainbow-ring::before {
             border-radius: 9999px;
         }
 
@@ -152,7 +153,7 @@
             -webkit-backdrop-filter: blur(16px);
             border: 1.5px solid rgba(255, 255, 255, 0.95);
             border-radius: 32px;
-            transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
             cursor: pointer;
             box-sizing: border-box;
             display: flex;
@@ -195,17 +196,14 @@
             transform: scale(1.08);
             z-index: 20;
         }
-
-        /* Movement animation enhancement: spring physics */
-        .game-card {
-            transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
     </style>
 </head>
 <body class="w-screen h-screen flex flex-col justify-between items-center relative text-gray-800 overflow-hidden select-none p-2 sm:p-4">
 
-    <!-- TOP HEADER STATUS BAR (CENTERED SEARCH BAR) -->
-    <header class="w-full flex items-center justify-center px-4 sm:px-8 pt-3 pb-2 z-40">
+    <!-- TOP HEADER STATUS BAR -->
+    <header class="w-full flex items-center justify-between px-4 sm:px-8 pt-3 pb-2 z-40 relative">
+        <div class="w-12 h-12 invisible"></div>
+
         <!-- Centered Expandable Search Bar -->
         <div id="search-box" class="search-container rainbow-ring glass-panel flex items-center px-4">
             <i class="fa-solid fa-magnifying-glass text-purple-400 text-sm flex-shrink-0 cursor-pointer" onclick="focusSearch()"></i>
@@ -217,20 +215,72 @@
                 autocomplete="off"
             >
         </div>
+
+        <!-- Settings Icon & Menu -->
+        <div class="relative flex items-center justify-end">
+            <button 
+                id="settings-btn" 
+                onclick="toggleSettingsMenu()" 
+                class="settings-btn w-12 h-12 rainbow-ring glass-panel rounded-full flex items-center justify-center cursor-pointer text-purple-500 hover:text-purple-600 transition-transform hover:scale-105 active:scale-95 outline-none"
+                title="Audio Settings"
+            >
+                <i class="fa-solid fa-gear text-sm sm:text-base"></i>
+            </button>
+
+            <!-- Expanded Audio Control Dropdown Menu -->
+            <div id="settings-menu" class="absolute top-14 right-0 w-72 sm:w-80 glass-panel rounded-3xl p-5 opacity-0 pointer-events-none transition-all duration-300 z-50 transform origin-top-right scale-95 border border-white/80 shadow-2xl">
+                <div class="flex items-center justify-between pb-3 border-b border-gray-200/50 mb-4">
+                    <span class="font-black text-gray-800 text-sm flex items-center gap-2">
+                        <i class="fa-solid fa-sliders text-purple-500"></i> Sound & Music
+                    </span>
+                    <button onclick="toggleSettingsMenu()" class="text-gray-400 hover:text-gray-600 text-xs cursor-pointer">
+                        <i class="fa-solid fa-xmark text-base"></i>
+                    </button>
+                </div>
+
+                <!-- Sound Effects Section -->
+                <div class="space-y-4">
+                    <div>
+                        <div class="flex items-center justify-between mb-1.5">
+                            <label class="text-xs font-extrabold text-gray-700 flex items-center gap-2">
+                                <i class="fa-solid fa-volume-high text-purple-500"></i> Sound Effects
+                            </label>
+                            <span id="sfx-status" class="text-xs font-black text-purple-600">ON — 80%</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <input type="checkbox" id="sfx-toggle" class="accent-purple-500 w-4 h-4 cursor-pointer" onchange="toggleSFX(this.checked)">
+                            <input type="range" id="sfx-volume" min="0" max="100" class="w-full accent-purple-500 cursor-pointer h-1.5 bg-gray-200/80 rounded-lg appearance-none transition-opacity" oninput="updateSFXVolume(this.value)">
+                        </div>
+                    </div>
+
+                    <!-- Background Music Section -->
+                    <div class="pt-3 border-t border-gray-200/50">
+                        <div class="flex items-center justify-between mb-1.5">
+                            <label class="text-xs font-extrabold text-gray-700 flex items-center gap-2">
+                                <i class="fa-solid fa-volume-high text-pink-500"></i> Home Music
+                            </label>
+                            <span id="bgm-status" class="text-xs font-black text-pink-600">ON — 40%</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <input type="checkbox" id="bgm-toggle" class="accent-pink-500 w-4 h-4 cursor-pointer" onchange="toggleBGM(this.checked)">
+                            <input type="range" id="bgm-volume" min="0" max="100" class="w-full accent-pink-500 cursor-pointer h-1.5 bg-gray-200/80 rounded-lg appearance-none transition-opacity" oninput="updateBGMVolume(this.value)">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </header>
 
-    <!-- MIDDLE AREA: FLOATING GHOST SEARCH EMPTY STATE (IF NO RESULTS FOUND) -->
+    <!-- MIDDLE AREA -->
     <main id="middle-view" class="w-full flex-1 flex flex-col justify-center items-center relative z-10 pointer-events-none hidden">
-        <!-- Floating state dynamically rendered here if search query yields no results -->
     </main>
 
-    <!-- BOTTOM GAMES AREA: EXTENDS ALL THE WAY ACROSS TO THE RIGHT SIDE AREA -->
+    <!-- BOTTOM GAMES AREA -->
     <footer id="footer-container" class="w-full pt-2 pb-6 relative z-20 flex justify-center items-end">
         <div 
             id="game-container" 
             class="flex flex-nowrap items-end justify-start gap-5 sm:gap-7 overflow-x-auto no-scrollbar py-6 w-full scroll-smooth px-[calc(50vw-70px)] sm:px-[calc(50vw-80px)]"
         >
-            <!-- Dynamically populated game cards -->
         </div>
     </footer>
 
@@ -262,36 +312,175 @@
         let catalogHash = "";
         let gamepadCooldown = false;
 
-        // Audio Feedback for Console UI
-        const scrollAudio = new Audio("https://github.com/school-rgb/new-Xbox-app-os/raw/refs/heads/main/ps5-scroll%20(1).mp3");
+        // Sound Effects (SFX) Audio Elements
+        const scrollAudio = new Audio("wii-home-button-sound-effects-hd-audiotrimmer_Yb6RcCL.mp3");
         const selectAudio = new Audio("https://github.com/school-rgb/new-Xbox-app-os/raw/refs/heads/main/xbox-series-select.mp3");
-        const backAudio = new Audio("https://github.com/school-rgb/Xbox-wallpaper/raw/refs/heads/main/xbox-series-back.mp3");
+        const backAudio = new Audio("wii-home-button-sound-effects-hd-audiotrimmer_vMXRIIu (2).mp3");
+
+        // Wii U Calm Background Audio
+        const bgmAudio = new Audio("leberch-background-581369.mp3");
+        bgmAudio.loop = true;
+
+        // Persistent State Management via LocalStorage
+        let sfxEnabled = localStorage.getItem('emr_sfx_enabled') !== null ? (localStorage.getItem('emr_sfx_enabled') === 'true') : true;
+        let sfxVolume = localStorage.getItem('emr_sfx_vol') !== null ? parseFloat(localStorage.getItem('emr_sfx_vol')) : 0.8;
+
+        let bgmEnabled = localStorage.getItem('emr_bgm_enabled') !== null ? (localStorage.getItem('emr_bgm_enabled') === 'true') : true;
+        let bgmVolume = localStorage.getItem('emr_bgm_vol') !== null ? parseFloat(localStorage.getItem('emr_bgm_vol')) : 0.4;
+
+        function saveAudioSettings() {
+            localStorage.setItem('emr_sfx_enabled', sfxEnabled);
+            localStorage.setItem('emr_sfx_vol', sfxVolume);
+            localStorage.setItem('emr_bgm_enabled', bgmEnabled);
+            localStorage.setItem('emr_bgm_vol', bgmVolume);
+        }
+
+        function initAudioControls() {
+            document.getElementById('sfx-toggle').checked = sfxEnabled;
+            document.getElementById('sfx-volume').value = Math.round(sfxVolume * 100);
+            
+            document.getElementById('bgm-toggle').checked = bgmEnabled;
+            document.getElementById('bgm-volume').value = Math.round(bgmVolume * 100);
+            bgmAudio.volume = bgmVolume;
+
+            updateSFXDisplay();
+            updateBGMDisplay();
+        }
 
         function playMoveSound() {
+            if (!sfxEnabled || sfxVolume <= 0) return;
             try {
                 const sound = scrollAudio.cloneNode();
+                sound.volume = sfxVolume;
                 sound.currentTime = 0;
                 sound.play().catch(() => {});
             } catch (e) {}
         }
 
         function playSelectSound() {
+            if (!sfxEnabled || sfxVolume <= 0) return;
             try {
                 const sound = selectAudio.cloneNode();
+                sound.volume = sfxVolume;
                 sound.currentTime = 0;
                 sound.play().catch(() => {});
             } catch (e) {}
         }
 
         function playBackSound() {
+            if (!sfxEnabled || sfxVolume <= 0) return;
             try {
                 const sound = backAudio.cloneNode();
+                sound.volume = sfxVolume;
                 sound.currentTime = 0;
                 sound.play().catch(() => {});
             } catch (e) {}
         }
 
-        // Current navigation focus: 'games' or 'search'
+        function toggleSettingsMenu() {
+            const menu = document.getElementById('settings-menu');
+            const isHidden = menu.classList.contains('opacity-0');
+            if (isHidden) {
+                menu.classList.remove('opacity-0', 'pointer-events-none', 'scale-95');
+                menu.classList.add('opacity-100', 'pointer-events-auto', 'scale-100');
+            } else {
+                menu.classList.add('opacity-0', 'pointer-events-none', 'scale-95');
+                menu.classList.remove('opacity-100', 'pointer-events-auto', 'scale-100');
+            }
+        }
+
+        function updateSFXDisplay() {
+            const statusText = document.getElementById('sfx-status');
+            const slider = document.getElementById('sfx-volume');
+            if (!sfxEnabled) {
+                statusText.textContent = "OFF";
+                statusText.className = "text-xs font-black text-gray-400";
+                slider.classList.add('opacity-40');
+            } else {
+                const pct = Math.round(sfxVolume * 100);
+                statusText.textContent = `ON — ${pct}%`;
+                statusText.className = "text-xs font-black text-purple-600";
+                slider.classList.remove('opacity-40');
+            }
+        }
+
+        function toggleSFX(enabled) {
+            sfxEnabled = enabled;
+            saveAudioSettings();
+            updateSFXDisplay();
+        }
+
+        function updateSFXVolume(val) {
+            sfxVolume = val / 100;
+            if (val == 0) {
+                sfxEnabled = false;
+                document.getElementById('sfx-toggle').checked = false;
+            } else if (!sfxEnabled) {
+                sfxEnabled = true;
+                document.getElementById('sfx-toggle').checked = true;
+            }
+            saveAudioSettings();
+            updateSFXDisplay();
+        }
+
+        function updateBGMDisplay() {
+            const statusText = document.getElementById('bgm-status');
+            const slider = document.getElementById('bgm-volume');
+            if (!bgmEnabled) {
+                statusText.textContent = "OFF";
+                statusText.className = "text-xs font-black text-gray-400";
+                slider.classList.add('opacity-40');
+            } else {
+                const pct = Math.round(bgmVolume * 100);
+                statusText.textContent = `ON — ${pct}%`;
+                statusText.className = "text-xs font-black text-pink-600";
+                slider.classList.remove('opacity-40');
+            }
+        }
+
+        function toggleBGM(enabled) {
+            bgmEnabled = enabled;
+            if (bgmEnabled) {
+                bgmAudio.play().catch(() => {});
+            } else {
+                bgmAudio.pause();
+            }
+            saveAudioSettings();
+            updateBGMDisplay();
+        }
+
+        function updateBGMVolume(val) {
+            bgmVolume = val / 100;
+            bgmAudio.volume = bgmVolume;
+            if (val == 0) {
+                bgmEnabled = false;
+                document.getElementById('bgm-toggle').checked = false;
+                bgmAudio.pause();
+            } else if (!bgmEnabled) {
+                bgmEnabled = true;
+                document.getElementById('bgm-toggle').checked = true;
+                if (bgmAudio.paused) bgmAudio.play().catch(() => {});
+            }
+            saveAudioSettings();
+            updateBGMDisplay();
+        }
+
+        // Auto-play BGM on initial user gesture
+        document.addEventListener('click', () => {
+            if (bgmEnabled && bgmAudio.paused) {
+                bgmAudio.play().catch(() => {});
+            }
+        }, { once: true });
+
+        document.addEventListener('click', (e) => {
+            const menu = document.getElementById('settings-menu');
+            const btn = document.getElementById('settings-btn');
+            if (menu && !menu.contains(e.target) && !btn.contains(e.target) && !menu.classList.contains('opacity-0')) {
+                toggleSettingsMenu();
+            }
+        });
+
+        // Search & Game Navigation
         let currentFocusArea = 'games';
 
         const searchInput = document.getElementById('search-input');
@@ -392,7 +581,6 @@
             gameContainer.innerHTML = '';
             middleView.innerHTML = '';
 
-            // Empty search state
             if (!list || list.length === 0) {
                 middleView.classList.remove('hidden');
                 middleView.innerHTML = `
@@ -407,18 +595,14 @@
                 middleView.classList.add('hidden');
             }
 
-            // Search Mode vs Default Horizontal Row Mode
             if (activeQuery) {
-                // Expand container from right below search bar all the way down to bottom
                 footerContainer.className = "w-full flex-1 relative z-20 flex justify-center items-start overflow-hidden";
                 gameContainer.className = "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-5 sm:gap-7 justify-items-center w-full max-w-6xl mx-auto py-4 px-6 overflow-y-auto h-full content-start grid-mode";
             } else {
-                // Default bottom horizontal dock layout
                 footerContainer.className = "w-full pt-2 pb-6 relative z-20 flex justify-center items-end";
                 gameContainer.className = "flex flex-nowrap items-end justify-start gap-5 sm:gap-7 overflow-x-auto no-scrollbar py-6 w-full scroll-smooth px-[calc(50vw-70px)] sm:px-[calc(50vw-80px)]";
             }
 
-            // Render Game Cards
             list.forEach((game, index) => {
                 const card = document.createElement('div');
                 card.className = 'game-card rainbow-ring p-1.5 sm:p-2';
@@ -826,13 +1010,7 @@
                 { name: "Tetris Master", id: "tetris", cover: "" },
                 { name: "Brick Breaker", id: "brick", cover: "" },
                 { name: "Space Defenders", id: "space", cover: "" },
-                { name: "Cyber Racer", id: "racer", cover: "" },
-                { name: "Dragon Ball Z", id: "dragon", cover: "" },
-                { name: "Crash Bandicoot", id: "crash", cover: "" },
-                { name: "LEGO Batman", id: "lego", cover: "" },
-                { name: "Mario Party", id: "mario", cover: "" },
-                { name: "Super Mario Bros", id: "super", cover: "" },
-                { name: "Pokemon Black", id: "pokemon", cover: "" }
+                { name: "Cyber Racer", id: "racer", cover: "" }
             ];
             gamesList = fallback;
             filteredGames = fallback;
@@ -847,11 +1025,10 @@
 
             const total = filteredGames.length;
 
-            // Infinite Wraparound Logic
             if (index < 0) {
-                index = total - 1; // Wrap to end
+                index = total - 1;
             } else if (index >= total) {
-                index = 0; // Wrap to beginning
+                index = 0;
             }
 
             if (activeIndex !== index && direction !== 'none') {
@@ -869,7 +1046,6 @@
                 }
             });
 
-            // Smooth Camera Scroll Alignment
             if (cards[index]) {
                 cards[index].scrollIntoView({
                     behavior: 'smooth',
@@ -877,39 +1053,6 @@
                     inline: 'center'
                 });
             }
-        }
-
-        function getGridColumns() {
-            const w = window.innerWidth;
-            if (w >= 1024) return 6;
-            if (w >= 768) return 4;
-            if (w >= 640) return 3;
-            return 2;
-        }
-
-        function moveGridVertical(deltaRows) {
-            const cols = getGridColumns();
-            const total = filteredGames.length;
-            if (total === 0) return;
-
-            const currentCol = activeIndex % cols;
-            const currentRow = Math.floor(activeIndex / cols);
-            const targetRow = currentRow + deltaRows;
-
-            if (targetRow < 0) {
-                currentFocusArea = 'search';
-                updateFocusUI();
-                playMoveSound();
-                return;
-            }
-
-            const totalRows = Math.ceil(total / cols);
-            if (targetRow >= totalRows) return;
-
-            let targetIndex = targetRow * cols + currentCol;
-            if (targetIndex >= total) targetIndex = total - 1;
-
-            selectGame(targetIndex, deltaRows > 0 ? 'down' : 'up');
         }
 
         function updateFocusUI() {
@@ -999,10 +1142,8 @@
         document.addEventListener('keydown', (e) => {
             const playView = document.getElementById('play-view');
             if (playView && playView.classList.contains('opacity-100')) {
-                if (e.key === 'Escape') {
-                    exitGamePlay();
-                }
-                return; // Do not process menu controls while playing game
+                if (e.key === 'Escape') exitGamePlay();
+                return;
             }
 
             const key = e.key;
@@ -1017,10 +1158,7 @@
                 }
             } else if (key === 'ArrowUp' || keyLower === 'w') {
                 e.preventDefault();
-                const isGrid = searchInput.value.trim().length > 0;
-                if (isGrid && currentFocusArea === 'games') {
-                    moveGridVertical(-1);
-                } else if (currentFocusArea === 'games') {
+                if (currentFocusArea === 'games') {
                     playMoveSound();
                     currentFocusArea = 'search';
                     updateFocusUI();
@@ -1031,11 +1169,6 @@
                     playMoveSound();
                     currentFocusArea = 'games';
                     updateFocusUI();
-                } else {
-                    const isGrid = searchInput.value.trim().length > 0;
-                    if (isGrid) {
-                        moveGridVertical(1);
-                    }
                 }
             } else if (key === 'ArrowRight' || keyLower === 'd') {
                 if (currentFocusArea === 'games') {
@@ -1047,21 +1180,6 @@
                     e.preventDefault();
                     selectGame(activeIndex - 1, 'left');
                 }
-            } else if (key === 'Home') {
-                if (currentFocusArea === 'games') {
-                    e.preventDefault();
-                    selectGame(0, 'left');
-                }
-            } else if (key === 'End') {
-                if (currentFocusArea === 'games') {
-                    e.preventDefault();
-                    selectGame(filteredGames.length - 1, 'right');
-                }
-            } else if (key === 'Tab') {
-                e.preventDefault();
-                playMoveSound();
-                currentFocusArea = currentFocusArea === 'games' ? 'search' : 'games';
-                updateFocusUI();
             } else if (key === 'Enter') {
                 if (currentFocusArea === 'games') {
                     e.preventDefault();
@@ -1069,97 +1187,6 @@
                 }
             }
         });
-
-        // Gamepad Controller Polling
-        function updateGamepad() {
-            const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
-            for (let gp of gamepads) {
-                if (!gp) continue;
-
-                if (!gamepadCooldown) {
-                    const axisY = gp.axes[1];
-                    const axisX = gp.axes[0];
-                    const dpadUp = gp.buttons[12] && gp.buttons[12].pressed;
-                    const dpadDown = gp.buttons[13] && gp.buttons[13].pressed;
-                    const dpadLeft = gp.buttons[14] && gp.buttons[14].pressed;
-                    const dpadRight = gp.buttons[15] && gp.buttons[15].pressed;
-                    const lb = gp.buttons[4] && gp.buttons[4].pressed;
-                    const rb = gp.buttons[5] && gp.buttons[5].pressed;
-
-                    if (axisY < -0.5 || dpadUp) {
-                        if (currentFocusArea === 'games') {
-                            const isGrid = searchInput.value.trim().length > 0;
-                            if (isGrid) {
-                                moveGridVertical(-1);
-                            } else {
-                                currentFocusArea = 'search';
-                                updateFocusUI();
-                            }
-                            triggerGamepadCooldown();
-                        }
-                    } else if (axisY > 0.5 || dpadDown) {
-                        if (currentFocusArea === 'search') {
-                            currentFocusArea = 'games';
-                            updateFocusUI();
-                            triggerGamepadCooldown();
-                        } else {
-                            const isGrid = searchInput.value.trim().length > 0;
-                            if (isGrid) moveGridVertical(1);
-                            triggerGamepadCooldown();
-                        }
-                    } else if (axisX < -0.5 || dpadLeft) {
-                        if (currentFocusArea === 'games') selectGame(activeIndex - 1, 'left');
-                        triggerGamepadCooldown();
-                    } else if (axisX > 0.5 || dpadRight) {
-                        if (currentFocusArea === 'games') selectGame(activeIndex + 1, 'right');
-                        triggerGamepadCooldown();
-                    } else if (lb) { // Bumper Skip Left 5
-                        if (currentFocusArea === 'games') selectGame(activeIndex - 5, 'left');
-                        triggerGamepadCooldown(280);
-                    } else if (rb) { // Bumper Skip Right 5
-                        if (currentFocusArea === 'games') selectGame(activeIndex + 5, 'right');
-                        triggerGamepadCooldown(280);
-                    }
-
-                    const buttonA = gp.buttons[0] && gp.buttons[0].pressed;
-                    if (buttonA) {
-                        handleEnterAction();
-                        triggerGamepadCooldown(300);
-                    }
-                }
-            }
-            requestAnimationFrame(updateGamepad);
-        }
-        requestAnimationFrame(updateGamepad);
-
-        function triggerGamepadCooldown(time = 180) {
-            gamepadCooldown = true;
-            setTimeout(() => { gamepadCooldown = false; }, time);
-        }
-
-        // Touch Drag & Swipe Support with Inertia
-        let isTouchDragging = false;
-        let touchStartX = 0;
-        let touchStartScroll = 0;
-
-        gameContainer.addEventListener('touchstart', (e) => {
-            if (e.touches.length === 1) {
-                isTouchDragging = true;
-                touchStartX = e.touches[0].clientX;
-                touchStartScroll = gameContainer.scrollLeft;
-            }
-        }, { passive: true });
-
-        gameContainer.addEventListener('touchmove', (e) => {
-            if (isTouchDragging && e.touches.length === 1) {
-                const deltaX = touchStartX - e.touches[0].clientX;
-                gameContainer.scrollLeft = touchStartScroll + deltaX;
-            }
-        }, { passive: true });
-
-        gameContainer.addEventListener('touchend', () => {
-            isTouchDragging = false;
-        }, { passive: true });
 
         function showToast(msg) {
             const toast = document.getElementById('toast-notify');
@@ -1172,17 +1199,10 @@
             }, 2200);
         }
 
-        // Horizontal Mouse Wheel Scrolling
-        gameContainer.addEventListener('wheel', (e) => {
-            const isGrid = searchInput.value.trim().length > 0;
-            if (!isGrid && e.deltaY !== 0) {
-                e.preventDefault();
-                gameContainer.scrollLeft += e.deltaY * 1.5;
-            }
-        }, { passive: false });
-
+        // Initialize saved settings on page load
+        initAudioControls();
         fetchGameCatalog();
         setInterval(fetchGameCatalog, 10000);
     </script>
 </body>
-</html>
+</html>        
