@@ -1,0 +1,1188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cute Console Menu</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Nunito -->
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+
+    <style>
+        @property --angle {
+            syntax: '<angle>';
+            initial-value: 0deg;
+            inherits: false;
+        }
+
+        @keyframes spin-colors-ccw {
+            0% { --angle: 360deg; }
+            100% { --angle: 0deg; }
+        }
+
+        @keyframes ghost-float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .ghost-animate {
+            animation: ghost-float 3s ease-in-out infinite;
+        }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #0f172a;
+            background-image: url('https://cdn.medal.tv/covers/5b3e7210fb1f215f5c7e016ca8a16b4a/1662529868195.png?width=3592&height=718');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            max-height: 100vh;
+            overflow: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        /* Hide Scrollbars */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Glassmorphic Panel Styling */
+        .glass-panel {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.92) 0%, rgba(255, 255, 255, 0.78) 100%);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border: 1.5px solid rgba(255, 255, 255, 0.95);
+            position: relative;
+            box-shadow: none !important;
+        }
+
+        .glass-panel::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 45%;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0) 100%);
+            pointer-events: none;
+            border-top-left-radius: inherit;
+            border-top-right-radius: inherit;
+            z-index: 2;
+        }
+
+        /* Hollow Spinning Rainbow Outline Ring */
+        .rainbow-ring {
+            position: relative;
+            box-shadow: none !important;
+        }
+
+        .rainbow-ring::before {
+            content: '';
+            position: absolute;
+            inset: -6px;
+            border-radius: 38px;
+            padding: 3px;
+            background: conic-gradient(from var(--angle) at 50% 50%, #f472b6 0%, #3b82f6 14%, #a855f7 28%, #ffffff 42%, #38bdf8 57%, #fbcfe8 71%, #e9d5ff 85%, #f472b6 100%);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask-composite: exclude;
+            opacity: 0;
+            transition: opacity 0.25s ease;
+            pointer-events: none;
+            z-index: 20;
+        }
+
+        @media (min-height: 700px) {
+            .rainbow-ring::before {
+                border-radius: 42px;
+            }
+        }
+
+        .search-container.rainbow-ring::before {
+            border-radius: 9999px;
+        }
+
+        .rainbow-ring:hover::before,
+        .rainbow-ring.focused::before,
+        .rainbow-ring:focus-within::before {
+            opacity: 1;
+            animation: spin-colors-ccw 4s linear infinite;
+        }
+
+        /* Expandable Center Search Bar */
+        .search-container {
+            width: 48px;
+            height: 48px;
+            transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            border-radius: 9999px;
+            box-shadow: none !important;
+        }
+
+        .search-container:hover,
+        .search-container:focus-within,
+        .search-container.focused,
+        .search-container.active {
+            width: 300px;
+        }
+
+        @media (min-width: 640px) {
+            .search-container:hover,
+            .search-container:focus-within,
+            .search-container.focused,
+            .search-container.active {
+                width: 360px;
+            }
+        }
+
+        /* Game Card Base Styling */
+        .game-card {
+            position: relative;
+            width: 140px;
+            height: 140px;
+            flex-shrink: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1.5px solid rgba(255, 255, 255, 0.95);
+            border-radius: 32px;
+            transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            cursor: pointer;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: visible;
+            z-index: 1;
+            box-shadow: none !important;
+        }
+
+        @media (min-height: 700px) {
+            .game-card {
+                width: 155px;
+                height: 155px;
+                border-radius: 36px;
+            }
+        }
+
+        .game-card-img-wrapper {
+            width: 100%;
+            height: 100%;
+            border-radius: 28px;
+            overflow: hidden;
+            position: relative;
+            z-index: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @media (min-height: 700px) {
+            .game-card-img-wrapper {
+                border-radius: 32px;
+            }
+        }
+
+        .game-card:hover,
+        .game-card.focused {
+            transform: scale(1.08);
+            z-index: 20;
+        }
+
+        /* Movement animation enhancement: spring physics */
+        .game-card {
+            transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+    </style>
+</head>
+<body class="w-screen h-screen flex flex-col justify-between items-center relative text-gray-800 overflow-hidden select-none p-2 sm:p-4">
+
+    <!-- TOP HEADER STATUS BAR (CENTERED SEARCH BAR) -->
+    <header class="w-full flex items-center justify-center px-4 sm:px-8 pt-3 pb-2 z-40">
+        <!-- Centered Expandable Search Bar -->
+        <div id="search-box" class="search-container rainbow-ring glass-panel flex items-center px-4">
+            <i class="fa-solid fa-magnifying-glass text-purple-400 text-sm flex-shrink-0 cursor-pointer" onclick="focusSearch()"></i>
+            <input 
+                type="text" 
+                id="search-input" 
+                placeholder="Search games..." 
+                class="w-full bg-transparent border-none outline-none text-xs sm:text-sm font-bold text-gray-700 ml-2 pr-1 placeholder-gray-400 opacity-0 focus:opacity-100 transition-opacity duration-300"
+                autocomplete="off"
+            >
+        </div>
+    </header>
+
+    <!-- MIDDLE AREA: FLOATING GHOST SEARCH EMPTY STATE (IF NO RESULTS FOUND) -->
+    <main id="middle-view" class="w-full flex-1 flex flex-col justify-center items-center relative z-10 pointer-events-none hidden">
+        <!-- Floating state dynamically rendered here if search query yields no results -->
+    </main>
+
+    <!-- BOTTOM GAMES AREA: EXTENDS ALL THE WAY ACROSS TO THE RIGHT SIDE AREA -->
+    <footer id="footer-container" class="w-full pt-2 pb-6 relative z-20 flex justify-center items-end">
+        <div 
+            id="game-container" 
+            class="flex flex-nowrap items-end justify-start gap-5 sm:gap-7 overflow-x-auto no-scrollbar py-6 w-full scroll-smooth px-[calc(50vw-70px)] sm:px-[calc(50vw-80px)]"
+        >
+            <!-- Dynamically populated game cards -->
+        </div>
+    </footer>
+
+    <!-- FULLSCREEN GAME PLAYBACK OVERLAY -->
+    <div id="play-view" class="fixed inset-0 bg-black z-50 flex flex-col opacity-0 pointer-events-none hidden transition-opacity duration-300">
+        <div class="absolute top-4 left-4 z-50">
+            <button onclick="exitGamePlay()" class="glass-panel px-5 py-2.5 rounded-full text-gray-900 font-extrabold text-xs sm:text-sm transition-transform hover:scale-105 cursor-pointer flex items-center gap-2">
+                <i class="fa-solid fa-arrow-left"></i> Exit to Menu
+            </button>
+        </div>
+        <iframe id="game-iframe" class="w-full h-full border-none" allow="autoplay; gamepad; keyboard; focus-without-user-activation" allowfullscreen="true"></iframe>
+    </div>
+
+    <!-- TOAST NOTIFICATION -->
+    <div id="toast-notify" class="fixed bottom-28 left-1/2 -translate-x-1/2 glass-panel px-6 py-2.5 rounded-full text-xs font-black text-gray-700 opacity-0 pointer-events-none transition-all duration-300 z-50 flex items-center gap-2">
+        <i class="fa-solid fa-sparkles text-purple-500"></i>
+        <span id="toast-text">Notification</span>
+    </div>
+
+    <script>
+        const fruitsZonesURL = "https://cdn.jsdelivr.net/gh/school-rgb/emr-@main/games.json";
+        const rawZonesURL = "https://raw.githubusercontent.com/school-rgb/emr-/main/games.json";
+        const fruitsCoverURL = "https://cdn.jsdelivr.net/gh/school-rgb/COVER@main";
+        const fruitsHtmlURL = "https://cdn.jsdelivr.net/gh/school-rgb/html@main";
+
+        let gamesList = [];
+        let filteredGames = [];
+        let activeIndex = 0;
+        let catalogHash = "";
+        let gamepadCooldown = false;
+
+        // Audio Feedback for Console UI
+        const scrollAudio = new Audio("https://github.com/school-rgb/new-Xbox-app-os/raw/refs/heads/main/ps5-scroll%20(1).mp3");
+        const selectAudio = new Audio("https://github.com/school-rgb/new-Xbox-app-os/raw/refs/heads/main/xbox-series-select.mp3");
+        const backAudio = new Audio("https://github.com/school-rgb/Xbox-wallpaper/raw/refs/heads/main/xbox-series-back.mp3");
+
+        function playMoveSound() {
+            try {
+                const sound = scrollAudio.cloneNode();
+                sound.currentTime = 0;
+                sound.play().catch(() => {});
+            } catch (e) {}
+        }
+
+        function playSelectSound() {
+            try {
+                const sound = selectAudio.cloneNode();
+                sound.currentTime = 0;
+                sound.play().catch(() => {});
+            } catch (e) {}
+        }
+
+        function playBackSound() {
+            try {
+                const sound = backAudio.cloneNode();
+                sound.currentTime = 0;
+                sound.play().catch(() => {});
+            } catch (e) {}
+        }
+
+        // Current navigation focus: 'games' or 'search'
+        let currentFocusArea = 'games';
+
+        const searchInput = document.getElementById('search-input');
+        const searchBox = document.getElementById('search-box');
+        const middleView = document.getElementById('middle-view');
+        const footerContainer = document.getElementById('footer-container');
+        const gameContainer = document.getElementById('game-container');
+
+        function focusSearch() {
+            if (currentFocusArea !== 'search') playMoveSound();
+            currentFocusArea = 'search';
+            searchBox.classList.add('active');
+            searchInput.focus();
+            updateFocusUI();
+        }
+
+        searchInput.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase().trim();
+            activeIndex = 0;
+
+            if (query) {
+                searchBox.classList.add('active');
+                filteredGames = gamesList.filter(g => {
+                    const name = (g.name || g.title || '').toLowerCase();
+                    return name.includes(query);
+                });
+            } else {
+                searchBox.classList.remove('active');
+                filteredGames = [...gamesList];
+            }
+            renderGamesDisplay(filteredGames, query);
+        });
+
+        function resetSearch() {
+            playBackSound();
+            searchInput.value = '';
+            searchBox.classList.remove('active');
+            filteredGames = [...gamesList];
+            activeIndex = 0;
+            renderGamesDisplay(filteredGames);
+            searchInput.blur();
+            currentFocusArea = 'games';
+            updateFocusUI();
+        }
+
+        async function fetchGameCatalog() {
+            try {
+                let data = null;
+                const timestamp = Date.now();
+                
+                try {
+                    const rawRes = await fetch(rawZonesURL + "?t=" + timestamp, { cache: "no-store" });
+                    if (rawRes.ok) data = await rawRes.json();
+                } catch (e) {}
+
+                if (!data) {
+                    const cdnRes = await fetch(fruitsZonesURL + "?t=" + timestamp, { cache: "no-store" });
+                    if (cdnRes.ok) data = await cdnRes.json();
+                }
+
+                let newZones = [];
+                if (Array.isArray(data)) {
+                    newZones = data;
+                } else if (data && Array.isArray(data.games)) {
+                    newZones = data.games;
+                } else if (data && typeof data === 'object') {
+                    newZones = Object.values(data).filter(item => item && typeof item === 'object');
+                }
+
+                const newHash = JSON.stringify(newZones);
+                if (newHash === catalogHash && gamesList.length > 0) return;
+                catalogHash = newHash;
+
+                gamesList = newZones;
+                gamesList.sort((a, b) => (a.name || a.title || '').localeCompare(b.name || b.title || '', undefined, { sensitivity: 'base', numeric: true }));
+                
+                const currentQuery = searchInput.value.toLowerCase().trim();
+                if (currentQuery) {
+                    filteredGames = gamesList.filter(g => (g.name || g.title || '').toLowerCase().includes(currentQuery));
+                } else {
+                    filteredGames = [...gamesList];
+                }
+                
+                renderGamesDisplay(filteredGames, currentQuery);
+            } catch (error) {
+                if (gamesList.length === 0) renderFallbackCatalog();
+            }
+        }
+
+        function getCoverUrl(file) {
+            if (!file || !file.cover) return '';
+            return file.cover
+                .replace("{COVER_URL}", fruitsCoverURL)
+                .replace("{HTML_URL}", fruitsHtmlURL);
+        }
+
+        function renderGamesDisplay(list, activeQuery = '') {
+            gameContainer.innerHTML = '';
+            middleView.innerHTML = '';
+
+            // Empty search state
+            if (!list || list.length === 0) {
+                middleView.classList.remove('hidden');
+                middleView.innerHTML = `
+                    <div class="flex flex-col items-center justify-center pointer-events-auto ghost-animate my-auto">
+                        <i class="fa-solid fa-ghost text-6xl sm:text-7xl text-purple-400 drop-shadow-md mb-3"></i>
+                        <p class="text-sm sm:text-base font-extrabold text-gray-500 tracking-wide text-center">No games found</p>
+                    </div>
+                `;
+                selectGame(0);
+                return;
+            } else {
+                middleView.classList.add('hidden');
+            }
+
+            // Search Mode vs Default Horizontal Row Mode
+            if (activeQuery) {
+                // Expand container from right below search bar all the way down to bottom
+                footerContainer.className = "w-full flex-1 relative z-20 flex justify-center items-start overflow-hidden";
+                gameContainer.className = "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-5 sm:gap-7 justify-items-center w-full max-w-6xl mx-auto py-4 px-6 overflow-y-auto h-full content-start grid-mode";
+            } else {
+                // Default bottom horizontal dock layout
+                footerContainer.className = "w-full pt-2 pb-6 relative z-20 flex justify-center items-end";
+                gameContainer.className = "flex flex-nowrap items-end justify-start gap-5 sm:gap-7 overflow-x-auto no-scrollbar py-6 w-full scroll-smooth px-[calc(50vw-70px)] sm:px-[calc(50vw-80px)]";
+            }
+
+            // Render Game Cards
+            list.forEach((game, index) => {
+                const card = document.createElement('div');
+                card.className = 'game-card rainbow-ring p-1.5 sm:p-2';
+                card.setAttribute('data-index', index);
+
+                const imgWrapper = document.createElement('div');
+                imgWrapper.className = 'game-card-img-wrapper';
+
+                const coverUrl = getCoverUrl(game);
+                const gameTitle = game.name || game.title || `Game ${index + 1}`;
+
+                if (coverUrl) {
+                    const img = document.createElement('img');
+                    img.src = coverUrl;
+                    img.alt = gameTitle;
+                    img.className = 'w-full h-full object-cover pointer-events-none transition-all duration-300';
+                    img.onerror = () => {
+                        img.remove();
+                        addFallbackIcon(imgWrapper);
+                    };
+                    imgWrapper.appendChild(img);
+                } else {
+                    addFallbackIcon(imgWrapper);
+                }
+
+                card.appendChild(imgWrapper);
+
+                card.addEventListener('mouseenter', () => {
+                    currentFocusArea = 'games';
+                    updateFocusUI();
+                    selectGame(index);
+                });
+
+                card.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    currentFocusArea = 'games';
+                    updateFocusUI();
+                    handleEnterAction(index);
+                });
+
+                gameContainer.appendChild(card);
+            });
+
+            selectGame(0);
+        }
+
+        function addFallbackIcon(container) {
+            const icons = ['fa-gamepad', 'fa-dice', 'fa-puzzle-piece', 'fa-ghost', 'fa-star', 'fa-rocket'];
+            const randomIcon = icons[Math.floor(Math.random() * icons.length)];
+            const iconEl = document.createElement('i');
+            iconEl.className = `fa-solid ${randomIcon} text-purple-300 text-4xl sm:text-5xl flex items-center justify-center`;
+            container.appendChild(iconEl);
+        }
+
+        function getBuiltInGameCode(key = '', file = {}) {
+            const title = file.name || file.title || 'Arcade Game';
+            const normKey = (key + ' ' + title).toLowerCase();
+
+            // 1. SNAKE ARCADE
+            if (normKey.includes('snake') || normKey.includes('pokemon') || normKey.includes('dragon')) {
+                return `<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>
+                body{margin:0;background:#0f172a;color:#fff;font-family:sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;overflow:hidden;}
+                canvas{background:#1e293b;border:3px solid #8b5cf6;border-radius:16px;box-shadow:0 10px 25px rgba(0,0,0,0.5);}
+                .ui{margin-bottom:12px;font-size:20px;font-weight:bold;color:#c084fc;display:flex;gap:20px;}
+                .controls{margin-top:12px;display:grid;grid-template-columns:repeat(3,50px);gap:8px;}
+                .btn{background:#3b82f6;color:#fff;border:none;padding:12px;border-radius:10px;font-weight:bold;font-size:16px;cursor:pointer;}
+                .btn:active{transform:scale(0.95);}
+                </style></head><body>
+                <div class="ui"><div>🐍 ${title}</div><div>Score: <span id="score">0</span></div></div>
+                <canvas id="gc" width="360" height="360"></canvas>
+                <div class="controls">
+                <div></div><button class="btn" onclick="setDir(0,-1)">▲</button><div></div>
+                <button class="btn" onclick="setDir(-1,0)">◄</button><button class="btn" onclick="setDir(0,1)">▼</button><button class="btn" onclick="setDir(1,0)">►</button>
+                </div>
+                <script>
+                const canvas=document.getElementById('gc'),ctx=canvas.getContext('2d'),gs=18,tc=20;
+                let px=10,py=10,ax=15,ay=15,xv=1,yv=0,trail=[],tail=4,score=0;
+                function setDir(x,y){if((x!=0&&xv!=-x)||(y!=0&&yv!=-y)){xv=x;yv=y;}}
+                document.addEventListener('keydown',e=>{
+                    if(e.key==='ArrowLeft'||e.key==='a')setDir(-1,0);
+                    if(e.key==='ArrowUp'||e.key==='w')setDir(0,-1);
+                    if(e.key==='ArrowRight'||e.key==='d')setDir(1,0);
+                    if(e.key==='ArrowDown'||e.key==='s')setDir(0,1);
+                });
+                function update(){
+                    px+=xv;py+=yv;
+                    if(px<0)px=tc-1;if(px>=tc)px=0;if(py<0)py=tc-1;if(py>=tc)py=0;
+                    ctx.fillStyle='#1e293b';ctx.fillRect(0,0,canvas.width,canvas.height);
+                    ctx.fillStyle='#a855f7';
+                    for(let i=0;i<trail.length;i++){
+                        ctx.beginPath();ctx.roundRect(trail[i].x*gs+1,trail[i].y*gs+1,gs-2,gs-2,4);ctx.fill();
+                        if(trail[i].x===px&&trail[i].y===py){tail=4;score=0;document.getElementById('score').innerText=score;}
+                    }
+                    trail.push({x:px,y:py});while(trail.length>tail)trail.shift();
+                    if(ax===px&&ay===py){tail++;score+=10;document.getElementById('score').innerText=score;ax=Math.floor(Math.random()*tc);ay=Math.floor(Math.random()*tc);}
+                    ctx.fillStyle='#f43f5e';ctx.beginPath();ctx.arc(ax*gs+gs/2,ay*gs+gs/2,gs/2-1,0,Math.PI*2);ctx.fill();
+                }
+                setInterval(update,1000/12);
+                <\/script></body></html>`;
+            }
+
+            // 2. FLAPPY GHOST
+            if (normKey.includes('flappy') || normKey.includes('crash') || normKey.includes('mario')) {
+                return `<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>
+                body{margin:0;background:#0f172a;color:#fff;font-family:sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;overflow:hidden;}
+                canvas{background:linear-gradient(to bottom, #1e1b4b, #312e81);border:3px solid #f472b6;border-radius:16px;}
+                .score{font-size:24px;font-weight:bold;color:#f472b6;margin-bottom:10px;}
+                .tip{margin-top:10px;font-size:14px;color:#94a3b8;}
+                </style></head><body>
+                <div class="score">👻 ${title} - Score: <span id="sc">0</span></div>
+                <canvas id="c" width="340" height="440"></canvas>
+                <div class="tip">Press Space, Arrow Up, or Tap to Jump</div>
+                <script>
+                const cv=document.getElementById('c'),ctx=cv.getContext('2d');
+                let gy=200,gv=0,g=0.4,pipes=[],score=0,over=false;
+                function jump(){if(over){gy=200;gv=0;pipes=[];score=0;over=false;document.getElementById('sc').innerText=0;}else{gv=-6.5;}}
+                window.addEventListener('keydown',e=>{if(e.code==='Space'||e.key==='ArrowUp')jump();});
+                cv.addEventListener('pointerdown',jump);
+                function spawnPipe(){
+                    let h=Math.floor(Math.random()*180)+50;
+                    pipes.push({x:340,top:h,bottom:440-h-120,passed:false});
+                }
+                setInterval(()=>{if(!over)spawnPipe();},1600);
+                function loop(){
+                    gv+=g;gy+=gv;
+                    ctx.clearRect(0,0,340,440);
+                    ctx.fillStyle='#c084fc';
+                    ctx.beginPath();ctx.arc(60,gy,14,0,Math.PI*2);ctx.fill();
+                    ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(64,gy-3,3,0,Math.PI*2);ctx.fill();
+                    for(let i=0;i<pipes.length;i++){
+                        let p=pipes[i];p.x-=2;
+                        ctx.fillStyle='#34d399';
+                        ctx.fillRect(p.x,0,45,p.top);
+                        ctx.fillRect(p.x,440-p.bottom,45,p.bottom);
+                        if(!p.passed&&p.x<60){p.passed=true;score++;document.getElementById('sc').innerText=score;}
+                        if(60+14>p.x&&60-14<p.x+45&&(gy-14<p.top||gy+14>440-p.bottom)){over=true;}
+                    }
+                    if(gy>440||gy<0)over=true;
+                    if(over){
+                        ctx.fillStyle='rgba(0,0,0,0.6)';ctx.fillRect(0,0,340,440);
+                        ctx.fillStyle='#f43f5e';ctx.font='bold 28px sans-serif';ctx.fillText('Game Over!',85,210);
+                        ctx.fillStyle='#fff';ctx.font='16px sans-serif';ctx.fillText('Tap to Restart',115,250);
+                    }
+                    requestAnimationFrame(loop);
+                }
+                loop();
+                <\/script></body></html>`;
+            }
+
+            // 3. TETRIS MASTER
+            if (normKey.includes('tetris') || normKey.includes('lego') || normKey.includes('puzzle') || normKey.includes('block')) {
+                return `<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>
+                body{margin:0;background:#0f172a;color:#fff;font-family:sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;overflow:hidden;}
+                canvas{background:#1e293b;border:3px solid #38bdf8;border-radius:12px;}
+                .header{font-size:20px;font-weight:bold;color:#38bdf8;margin-bottom:8px;}
+                .controls{margin-top:10px;display:flex;gap:10px;}
+                .btn{background:#0284c7;color:#fff;border:none;padding:10px 16px;border-radius:8px;font-weight:bold;cursor:pointer;}
+                </style></head><body>
+                <div class="header">🧱 ${title} - Score: <span id="sc">0</span></div>
+                <canvas id="t" width="240" height="400"></canvas>
+                <div class="controls">
+                    <button class="btn" onclick="move(-1)">◄</button>
+                    <button class="btn" onclick="rotate()">↻</button>
+                    <button class="btn" onclick="drop()">▼</button>
+                    <button class="btn" onclick="move(1)">►</button>
+                </div>
+                <script>
+                const cv=document.getElementById('t'),ctx=cv.getContext('2d'),W=10,H=20,SZ=20;
+                let board=Array(H).fill().map(()=>Array(W).fill(0)),score=0;
+                const shapes=[
+                    [[1,1,1,1]],
+                    [[1,1],[1,1]],
+                    [[0,1,0],[1,1,1]],
+                    [[1,0,0],[1,1,1]],
+                    [[0,0,1],[1,1,1]],
+                    [[0,1,1],[1,1,0]],
+                    [[1,1,0],[0,1,1]]
+                ];
+                const colors=['#000','#38bdf8','#facc15','#a855f7','#f97316','#3b82f6','#22c55e','#ef4444'];
+                let p={shape:shapes[0],color:1,x:3,y:0};
+                function newPiece(){
+                    let idx=Math.floor(Math.random()*shapes.length);
+                    p={shape:shapes[idx],color:idx+1,x:3,y:0};
+                    if(collide(0,0)){board=Array(H).fill().map(()=>Array(W).fill(0));score=0;document.getElementById('sc').innerText=0;}
+                }
+                function collide(dx,dy,s=p.shape){
+                    for(let r=0;r<s.length;r++){
+                        for(let c=0;c<s[r].length;c++){
+                            if(s[r][c]){
+                                let nx=p.x+c+dx,ny=p.y+r+dy;
+                                if(nx<0||nx>=W||ny>=H||(ny>=0&&board[ny][nx]))return true;
+                            }
+                        }
+                    }
+                    return false;
+                }
+                function move(dir){if(!collide(dir,0))p.x+=dir;}
+                function rotate(){
+                    let s=p.shape,rotated=s[0].map((_,i)=>s.map(row=>row[i]).reverse());
+                    if(!collide(0,0,rotated))p.shape=rotated;
+                }
+                function drop(){
+                    if(!collide(0,1))p.y++;
+                    else{
+                        for(let r=0;r<p.shape.length;r++){
+                            for(let c=0;c<p.shape[r].length;c++){
+                                if(p.shape[r][c]&&p.y+r>=0)board[p.y+r][p.x+c]=p.color;
+                            }
+                        }
+                        clearLines();newPiece();
+                    }
+                }
+                function clearLines(){
+                    for(let r=H-1;r>=0;r--){
+                        if(board[r].every(v=>v!==0)){
+                            board.splice(r,1);board.unshift(Array(W).fill(0));
+                            score+=100;document.getElementById('sc').innerText=score;r++;
+                        }
+                    }
+                }
+                document.addEventListener('keydown',e=>{
+                    if(e.key==='ArrowLeft'||e.key==='a')move(-1);
+                    if(e.key==='ArrowRight'||e.key==='d')move(1);
+                    if(e.key==='ArrowUp'||e.key==='w')rotate();
+                    if(e.key==='ArrowDown'||e.key==='s')drop();
+                });
+                setInterval(drop,500);
+                function draw(){
+                    ctx.fillStyle='#1e293b';ctx.fillRect(0,0,240,400);
+                    for(let r=0;r<H;r++){
+                        for(let c=0;c<W;c++){
+                            if(board[r][c]){ctx.fillStyle=colors[board[r][c]];ctx.fillRect(c*SZ,r*SZ,SZ-1,SZ-1);}
+                        }
+                    }
+                    ctx.fillStyle=colors[p.color];
+                    for(let r=0;r<p.shape.length;r++){
+                        for(let c=0;c<p.shape[r].length;c++){
+                            if(p.shape[r][c])ctx.fillRect((p.x+c)*SZ,(p.y+r)*SZ,SZ-1,SZ-1);
+                        }
+                    }
+                    requestAnimationFrame(draw);
+                }
+                draw();
+                <\/script></body></html>`;
+            }
+
+            // 4. BRICK BREAKER
+            if (normKey.includes('brick') || normKey.includes('party') || normKey.includes('super')) {
+                return `<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>
+                body{margin:0;background:#090d16;color:#fff;font-family:sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;overflow:hidden;}
+                canvas{background:#111827;border:3px solid #f472b6;border-radius:16px;}
+                .header{font-size:22px;font-weight:bold;color:#f472b6;margin-bottom:10px;}
+                </style></head><body>
+                <div class="header">🧱 ${title} - Score: <span id="sc">0</span></div>
+                <canvas id="b" width="400" height="420"></canvas>
+                <script>
+                const cv=document.getElementById('b'),ctx=cv.getContext('2d');
+                let px=160,pw=80,bx=200,by=300,dx=3,dy=-3,score=0,rows=5,cols=6;
+                let bricks=[];
+                function initBricks(){
+                    bricks=[];
+                    for(let r=0;r<rows;r++){
+                        bricks[r]=[];
+                        for(let c=0;c<cols;c++)bricks[r][c]={x:c*62+15,y:r*25+40,status:1};
+                    }
+                }
+                initBricks();
+                cv.addEventListener('mousemove',e=>{let rect=cv.getBoundingClientRect();px=e.clientX-rect.left-pw/2;});
+                cv.addEventListener('touchmove',e=>{let rect=cv.getBoundingClientRect();px=e.touches[0].clientX-rect.left-pw/2;});
+                function draw(){
+                    ctx.clearRect(0,0,400,420);
+                    const colors=['#f472b6','#a855f7','#3b82f6','#38bdf8','#34d399'];
+                    for(let r=0;r<rows;r++){
+                        for(let c=0;c<cols;c++){
+                            let b=bricks[r][c];
+                            if(b.status===1){
+                                ctx.fillStyle=colors[r];ctx.beginPath();ctx.roundRect(b.x,b.y,54,20,4);ctx.fill();
+                                if(bx>b.x&&bx<b.x+54&&by>b.y&&by<b.y+20){dy=-dy;b.status=0;score+=20;document.getElementById('sc').innerText=score;}
+                            }
+                        }
+                    }
+                    ctx.fillStyle='#e2e8f0';ctx.beginPath();ctx.roundRect(px,390,pw,12,6);ctx.fill();
+                    ctx.fillStyle='#f43f5e';ctx.beginPath();ctx.arc(bx,by,8,0,Math.PI*2);ctx.fill();
+                    if(bx+dx>392||bx+dx<8)dx=-dx;
+                    if(by+dy<8)dy=-dy;
+                    else if(by+dy>382){
+                        if(bx>px&&bx<px+pw)dy=-dy;
+                        else if(by>420){bx=200;by=300;dx=3;dy=-3;score=0;document.getElementById('sc').innerText=0;initBricks();}
+                    }
+                    bx+=dx;by+=dy;
+                    requestAnimationFrame(draw);
+                }
+                draw();
+                <\/script></body></html>`;
+            }
+
+            // 5. SPACE DEFENDERS
+            if (normKey.includes('space') || normKey.includes('star') || normKey.includes('black') || normKey.includes('blue')) {
+                return `<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>
+                body{margin:0;background:#020617;color:#fff;font-family:sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;overflow:hidden;}
+                canvas{background:#0b0f19;border:3px solid #38bdf8;border-radius:16px;}
+                .header{font-size:22px;font-weight:bold;color:#38bdf8;margin-bottom:8px;}
+                </style></head><body>
+                <div class="header">🚀 ${title} - Score: <span id="sc">0</span></div>
+                <canvas id="s" width="380" height="420"></canvas>
+                <script>
+                const cv=document.getElementById('s'),ctx=cv.getContext('2d');
+                let px=175,bullets=[],enemies=[],score=0;
+                function spawnEnemies(){
+                    for(let r=0;r<3;r++){
+                        for(let c=0;c<6;c++)enemies.push({x:c*55+30,y:r*35+40,w:35,h:20,active:true});
+                    }
+                }
+                spawnEnemies();
+                document.addEventListener('keydown',e=>{
+                    if(e.key==='ArrowLeft'||e.key==='a')px=Math.max(10,px-20);
+                    if(e.key==='ArrowRight'||e.key==='d')px=Math.min(340,px+20);
+                    if(e.code==='Space'||e.key==='ArrowUp')bullets.push({x:px+14,y:380});
+                });
+                cv.addEventListener('pointerdown',e=>{
+                    let rect=cv.getBoundingClientRect();px=e.clientX-rect.left-15;
+                    bullets.push({x:px+14,y:380});
+                });
+                function loop(){
+                    ctx.clearRect(0,0,380,420);
+                    ctx.fillStyle='#38bdf8';ctx.fillRect(px,390,30,15);
+                    ctx.fillStyle='#f43f5e';
+                    for(let i=0;i<bullets.length;i++){
+                        let b=bullets[i];b.y-=6;
+                        ctx.fillRect(b.x,b.y,4,10);
+                        for(let e of enemies){
+                            if(e.active&&b.x>e.x&&b.x<e.x+e.w&&b.y>e.y&&b.y<e.y+e.h){
+                                e.active=false;b.y=-100;score+=50;document.getElementById('sc').innerText=score;
+                            }
+                        }
+                    }
+                    bullets=bullets.filter(b=>b.y>0);
+                    ctx.fillStyle='#a855f7';
+                    let activeCount=0;
+                    for(let e of enemies){
+                        if(e.active){
+                            activeCount++;ctx.beginPath();ctx.roundRect(e.x,e.y,e.w,e.h,6);ctx.fill();
+                        }
+                    }
+                    if(activeCount===0){spawnEnemies();}
+                    requestAnimationFrame(loop);
+                }
+                loop();
+                <\/script></body></html>`;
+            }
+
+            // 6. DEFAULT ARCHETYPE: CYBER RACER
+            return `<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>
+            body{margin:0;background:#090d16;color:#fff;font-family:sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;overflow:hidden;}
+            canvas{background:#111827;border:3px solid #c084fc;border-radius:16px;}
+            .header{font-size:22px;font-weight:bold;color:#c084fc;margin-bottom:8px;}
+            .tip{margin-top:8px;font-size:14px;color:#94a3b8;}
+            </style></head><body>
+            <div class="header">🏎️ ${title} - Distance: <span id="sc">0</span>m</div>
+            <canvas id="r" width="340" height="420"></canvas>
+            <div class="tip">Tap Left / Right or Arrow Keys to Drive</div>
+            <script>
+            const cv=document.getElementById('r'),ctx=cv.getContext('2d');
+            let lane=1,lanes=[55,155,255],score=0,obs=[],speed=4,over=false;
+            document.addEventListener('keydown',e=>{
+                if((e.key==='ArrowLeft'||e.key==='a')&&lane>0)lane--;
+                if((e.key==='ArrowRight'||e.key==='d')&&lane<2)lane++;
+                if(over){over=false;score=0;obs=[];speed=4;lane=1;}
+            });
+            cv.addEventListener('pointerdown',e=>{
+                let rect=cv.getBoundingClientRect();
+                if(e.clientX-rect.left < 170 && lane>0)lane--;
+                else if(e.clientX-rect.left >= 170 && lane<2)lane++;
+                if(over){over=false;score=0;obs=[];speed=4;lane=1;}
+            });
+            setInterval(()=>{if(!over)obs.push({lane:Math.floor(Math.random()*3),y:-60});},1200);
+            function loop(){
+                ctx.clearRect(0,0,340,420);
+                ctx.strokeStyle='#374151';ctx.setLineDash([20,20]);
+                ctx.beginPath();ctx.moveTo(113,0);ctx.lineTo(113,420);ctx.stroke();
+                ctx.beginPath();ctx.moveTo(226,0);ctx.lineTo(226,420);ctx.stroke();
+                ctx.fillStyle='#c084fc';ctx.beginPath();ctx.roundRect(lanes[lane],340,30,50,8);ctx.fill();
+                ctx.fillStyle='#f43f5e';
+                for(let o of obs){
+                    o.y+=speed;
+                    ctx.beginPath();ctx.roundRect(lanes[o.lane],o.y,30,50,8);ctx.fill();
+                    if(o.lane===lane&&o.y>300&&o.y<390)over=true;
+                }
+                if(!over){score+=1;document.getElementById('sc').innerText=score;speed+=0.001;}
+                else{
+                    ctx.fillStyle='rgba(0,0,0,0.7)';ctx.fillRect(0,0,340,420);
+                    ctx.fillStyle='#f43f5e';ctx.font='bold 28px sans-serif';ctx.fillText('CRASHED!',90,200);
+                    ctx.fillStyle='#fff';ctx.font='16px sans-serif';ctx.fillText('Tap to Restart',110,240);
+                }
+                requestAnimationFrame(loop);
+            }
+            loop();
+            <\/script></body></html>`;
+        }
+
+        function renderFallbackCatalog() {
+            const fallback = [
+                { name: "Snake Arcade", id: "snake", cover: "" },
+                { name: "Flappy Ghost", id: "flappy", cover: "" },
+                { name: "Tetris Master", id: "tetris", cover: "" },
+                { name: "Brick Breaker", id: "brick", cover: "" },
+                { name: "Space Defenders", id: "space", cover: "" },
+                { name: "Cyber Racer", id: "racer", cover: "" },
+                { name: "Dragon Ball Z", id: "dragon", cover: "" },
+                { name: "Crash Bandicoot", id: "crash", cover: "" },
+                { name: "LEGO Batman", id: "lego", cover: "" },
+                { name: "Mario Party", id: "mario", cover: "" },
+                { name: "Super Mario Bros", id: "super", cover: "" },
+                { name: "Pokemon Black", id: "pokemon", cover: "" }
+            ];
+            gamesList = fallback;
+            filteredGames = fallback;
+            renderGamesDisplay(fallback);
+        }
+
+        function selectGame(index, direction = 'none') {
+            if (!filteredGames || filteredGames.length === 0) {
+                activeIndex = 0;
+                return;
+            }
+
+            const total = filteredGames.length;
+
+            // Infinite Wraparound Logic
+            if (index < 0) {
+                index = total - 1; // Wrap to end
+            } else if (index >= total) {
+                index = 0; // Wrap to beginning
+            }
+
+            if (activeIndex !== index && direction !== 'none') {
+                playMoveSound();
+            }
+
+            activeIndex = index;
+
+            const cards = document.querySelectorAll('.game-card');
+            cards.forEach((c, idx) => {
+                if (idx === index && currentFocusArea === 'games') {
+                    c.classList.add('focused');
+                } else {
+                    c.classList.remove('focused');
+                }
+            });
+
+            // Smooth Camera Scroll Alignment
+            if (cards[index]) {
+                cards[index].scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'nearest',
+                    inline: 'center'
+                });
+            }
+        }
+
+        function getGridColumns() {
+            const w = window.innerWidth;
+            if (w >= 1024) return 6;
+            if (w >= 768) return 4;
+            if (w >= 640) return 3;
+            return 2;
+        }
+
+        function moveGridVertical(deltaRows) {
+            const cols = getGridColumns();
+            const total = filteredGames.length;
+            if (total === 0) return;
+
+            const currentCol = activeIndex % cols;
+            const currentRow = Math.floor(activeIndex / cols);
+            const targetRow = currentRow + deltaRows;
+
+            if (targetRow < 0) {
+                currentFocusArea = 'search';
+                updateFocusUI();
+                playMoveSound();
+                return;
+            }
+
+            const totalRows = Math.ceil(total / cols);
+            if (targetRow >= totalRows) return;
+
+            let targetIndex = targetRow * cols + currentCol;
+            if (targetIndex >= total) targetIndex = total - 1;
+
+            selectGame(targetIndex, deltaRows > 0 ? 'down' : 'up');
+        }
+
+        function updateFocusUI() {
+            searchBox.classList.remove('focused');
+
+            if (currentFocusArea === 'search') {
+                searchBox.classList.add('focused');
+                searchInput.focus();
+            } else {
+                searchInput.blur();
+            }
+
+            selectGame(activeIndex);
+        }
+
+        function handleEnterAction(index = activeIndex) {
+            if (currentFocusArea === 'search') {
+                searchInput.focus();
+                return;
+            }
+
+            if (!filteredGames || filteredGames.length === 0) return;
+            playSelectSound();
+            launchGame(filteredGames[index]);
+        }
+
+        function launchGame(game) {
+            if (!game) return;
+            showToast(`Launching ${game.name || game.title || 'Game'}...`);
+
+            const playView = document.getElementById('play-view');
+            const iframe = document.getElementById('game-iframe');
+            
+            playView.classList.remove('hidden');
+            void playView.offsetWidth;
+            playView.classList.remove('opacity-0', 'pointer-events-none');
+            playView.classList.add('opacity-100', 'pointer-events-auto');
+
+            runGame(game, iframe);
+        }
+
+        function runGame(file, zoneFrameElement) {
+            zoneFrameElement.removeAttribute('srcdoc');
+            zoneFrameElement.src = 'about:blank';
+            
+            const gameKey = (file.id || file.name || file.title || '');
+            const defaultCode = getBuiltInGameCode(gameKey, file);
+
+            if (file.url && file.url.startsWith("http")) {
+                zoneFrameElement.src = file.url;
+            } else if (file.url) {
+                const targetUrl = file.url
+                    .replace("{COVER_URL}", fruitsCoverURL)
+                    .replace("{HTML_URL}", fruitsHtmlURL);
+
+                fetch(targetUrl + "?t=" + Date.now())
+                    .then(response => {
+                        if (!response.ok) throw new Error("Game file not found.");
+                        return response.text();
+                    })
+                    .then(html => {
+                        zoneFrameElement.srcdoc = html;
+                    })
+                    .catch(() => {
+                        zoneFrameElement.srcdoc = defaultCode;
+                    });
+            } else {
+                zoneFrameElement.srcdoc = defaultCode;
+            }
+        }
+
+        function exitGamePlay() {
+            playBackSound();
+            const playView = document.getElementById('play-view');
+            const iframe = document.getElementById('game-iframe');
+            
+            iframe.removeAttribute('srcdoc');
+            iframe.src = 'about:blank';
+            playView.classList.remove('opacity-100', 'pointer-events-auto');
+            playView.classList.add('opacity-0', 'pointer-events-none');
+            setTimeout(() => {
+                playView.classList.add('hidden');
+                window.focus();
+            }, 300);
+        }
+
+        document.addEventListener('keydown', (e) => {
+            const playView = document.getElementById('play-view');
+            if (playView && playView.classList.contains('opacity-100')) {
+                if (e.key === 'Escape') {
+                    exitGamePlay();
+                }
+                return; // Do not process menu controls while playing game
+            }
+
+            const key = e.key;
+            const keyLower = key.toLowerCase();
+
+            if (key === 'Escape') {
+                if (document.getElementById('play-view').classList.contains('opacity-100')) {
+                    exitGamePlay();
+                } else if (searchInput.value || searchBox.classList.contains('active')) {
+                    e.preventDefault();
+                    resetSearch();
+                }
+            } else if (key === 'ArrowUp' || keyLower === 'w') {
+                e.preventDefault();
+                const isGrid = searchInput.value.trim().length > 0;
+                if (isGrid && currentFocusArea === 'games') {
+                    moveGridVertical(-1);
+                } else if (currentFocusArea === 'games') {
+                    playMoveSound();
+                    currentFocusArea = 'search';
+                    updateFocusUI();
+                }
+            } else if (key === 'ArrowDown' || keyLower === 's') {
+                e.preventDefault();
+                if (currentFocusArea === 'search') {
+                    playMoveSound();
+                    currentFocusArea = 'games';
+                    updateFocusUI();
+                } else {
+                    const isGrid = searchInput.value.trim().length > 0;
+                    if (isGrid) {
+                        moveGridVertical(1);
+                    }
+                }
+            } else if (key === 'ArrowRight' || keyLower === 'd') {
+                if (currentFocusArea === 'games') {
+                    e.preventDefault();
+                    selectGame(activeIndex + 1, 'right');
+                }
+            } else if (key === 'ArrowLeft' || keyLower === 'a') {
+                if (currentFocusArea === 'games') {
+                    e.preventDefault();
+                    selectGame(activeIndex - 1, 'left');
+                }
+            } else if (key === 'Home') {
+                if (currentFocusArea === 'games') {
+                    e.preventDefault();
+                    selectGame(0, 'left');
+                }
+            } else if (key === 'End') {
+                if (currentFocusArea === 'games') {
+                    e.preventDefault();
+                    selectGame(filteredGames.length - 1, 'right');
+                }
+            } else if (key === 'Tab') {
+                e.preventDefault();
+                playMoveSound();
+                currentFocusArea = currentFocusArea === 'games' ? 'search' : 'games';
+                updateFocusUI();
+            } else if (key === 'Enter') {
+                if (currentFocusArea === 'games') {
+                    e.preventDefault();
+                    handleEnterAction();
+                }
+            }
+        });
+
+        // Gamepad Controller Polling
+        function updateGamepad() {
+            const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
+            for (let gp of gamepads) {
+                if (!gp) continue;
+
+                if (!gamepadCooldown) {
+                    const axisY = gp.axes[1];
+                    const axisX = gp.axes[0];
+                    const dpadUp = gp.buttons[12] && gp.buttons[12].pressed;
+                    const dpadDown = gp.buttons[13] && gp.buttons[13].pressed;
+                    const dpadLeft = gp.buttons[14] && gp.buttons[14].pressed;
+                    const dpadRight = gp.buttons[15] && gp.buttons[15].pressed;
+                    const lb = gp.buttons[4] && gp.buttons[4].pressed;
+                    const rb = gp.buttons[5] && gp.buttons[5].pressed;
+
+                    if (axisY < -0.5 || dpadUp) {
+                        if (currentFocusArea === 'games') {
+                            const isGrid = searchInput.value.trim().length > 0;
+                            if (isGrid) {
+                                moveGridVertical(-1);
+                            } else {
+                                currentFocusArea = 'search';
+                                updateFocusUI();
+                            }
+                            triggerGamepadCooldown();
+                        }
+                    } else if (axisY > 0.5 || dpadDown) {
+                        if (currentFocusArea === 'search') {
+                            currentFocusArea = 'games';
+                            updateFocusUI();
+                            triggerGamepadCooldown();
+                        } else {
+                            const isGrid = searchInput.value.trim().length > 0;
+                            if (isGrid) moveGridVertical(1);
+                            triggerGamepadCooldown();
+                        }
+                    } else if (axisX < -0.5 || dpadLeft) {
+                        if (currentFocusArea === 'games') selectGame(activeIndex - 1, 'left');
+                        triggerGamepadCooldown();
+                    } else if (axisX > 0.5 || dpadRight) {
+                        if (currentFocusArea === 'games') selectGame(activeIndex + 1, 'right');
+                        triggerGamepadCooldown();
+                    } else if (lb) { // Bumper Skip Left 5
+                        if (currentFocusArea === 'games') selectGame(activeIndex - 5, 'left');
+                        triggerGamepadCooldown(280);
+                    } else if (rb) { // Bumper Skip Right 5
+                        if (currentFocusArea === 'games') selectGame(activeIndex + 5, 'right');
+                        triggerGamepadCooldown(280);
+                    }
+
+                    const buttonA = gp.buttons[0] && gp.buttons[0].pressed;
+                    if (buttonA) {
+                        handleEnterAction();
+                        triggerGamepadCooldown(300);
+                    }
+                }
+            }
+            requestAnimationFrame(updateGamepad);
+        }
+        requestAnimationFrame(updateGamepad);
+
+        function triggerGamepadCooldown(time = 180) {
+            gamepadCooldown = true;
+            setTimeout(() => { gamepadCooldown = false; }, time);
+        }
+
+        // Touch Drag & Swipe Support with Inertia
+        let isTouchDragging = false;
+        let touchStartX = 0;
+        let touchStartScroll = 0;
+
+        gameContainer.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 1) {
+                isTouchDragging = true;
+                touchStartX = e.touches[0].clientX;
+                touchStartScroll = gameContainer.scrollLeft;
+            }
+        }, { passive: true });
+
+        gameContainer.addEventListener('touchmove', (e) => {
+            if (isTouchDragging && e.touches.length === 1) {
+                const deltaX = touchStartX - e.touches[0].clientX;
+                gameContainer.scrollLeft = touchStartScroll + deltaX;
+            }
+        }, { passive: true });
+
+        gameContainer.addEventListener('touchend', () => {
+            isTouchDragging = false;
+        }, { passive: true });
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast-notify');
+            document.getElementById('toast-text').textContent = msg;
+            toast.classList.remove('opacity-0', 'pointer-events-none');
+            toast.classList.add('opacity-100');
+            setTimeout(() => {
+                toast.classList.remove('opacity-100');
+                toast.classList.add('opacity-0', 'pointer-events-none');
+            }, 2200);
+        }
+
+        // Horizontal Mouse Wheel Scrolling
+        gameContainer.addEventListener('wheel', (e) => {
+            const isGrid = searchInput.value.trim().length > 0;
+            if (!isGrid && e.deltaY !== 0) {
+                e.preventDefault();
+                gameContainer.scrollLeft += e.deltaY * 1.5;
+            }
+        }, { passive: false });
+
+        fetchGameCatalog();
+        setInterval(fetchGameCatalog, 10000);
+    </script>
+</body>
+</html>
